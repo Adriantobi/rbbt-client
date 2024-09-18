@@ -108,6 +108,6 @@ export class RBBTClient {
 
     const exchange = new RBBTExchange(this, name, options);
     this.exchanges.push(exchange);
-    return exchange.open();
+    return exchange;
   }
 }

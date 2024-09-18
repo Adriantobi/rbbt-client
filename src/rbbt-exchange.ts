@@ -18,9 +18,10 @@ export class RBBTExchange {
     this.connection = connection;
     this.name = name;
     this.options = options;
+    this.open();
   }
 
-  open() {
+  private open() {
     if (this.connection.client && this.connection.client?.state === 0) {
       try {
         this.connection.client.onConnect = () => {
