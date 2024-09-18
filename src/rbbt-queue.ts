@@ -1,7 +1,7 @@
 import { RBBTError } from "./rbbt-error";
 import { RBBTExchange } from "./rbbt-exchange";
 import { RBBTMessage } from "./rbbt-message";
-import { RBBTConsumeParams, RBBTQueueParams } from "./types";
+import { RBBTConsumeParams, RBBTProperties, RBBTQueueParams } from "./types";
 
 export class RBBTQueue {
   readonly exchange: RBBTExchange;
@@ -177,6 +177,28 @@ export class RBBTQueue {
 
   unsubscribe() {
     this.watch.unsubscribe();
+  }
+
+  send(body: string | Uint8Array | undefined, properties: RBBTProperties = {}) {
+    if (
+      this.exchange.connection.client &&
+      this.exchange.connection.client?.active
+    ) {
+      if (this.exchange.closed === true)
+        new RBBTError("Exchange is closed", this.exchange.connection);
+      else {
+        const message: any = {
+          destination: `/queue/${this.name}`,
+          ...properties,
+        };
+        if (typeof body === "string") {
+          message.body = body;
+        } else if (body instanceof Uint8Array) {
+          message.binaryBody = body;
+        }
+        this.exchange.connection.client.publish(message);
+      }
+    } else new RBBTError("Client not connected", this.exchange.connection);
   }
 
   private generateQueueName() {
