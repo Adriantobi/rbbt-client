@@ -33,13 +33,13 @@ export class RBBTClient {
   }
 
   connect() {
-    const url = new URL(this.clone(this.url));
+    const url = this.clone(this.url);
     const vhost = this.clone(this.vhost ? this.vhost : "/");
     const username = this.clone(this.username ? this.username : "guest");
     const password = this.clone(this.password ? this.password : "guest");
     const heartbeat = this.clone(this.heartbeat);
 
-    if (!url.protocol.includes("ws")) {
+    if (!url.split("://")[0].includes("ws")) {
       new RBBTError("Invalid protocol, use ws or wss", this);
     }
 
@@ -48,29 +48,19 @@ export class RBBTClient {
     return this;
   }
 
-  private copyInto(obj: any, target: any) {
-    var keys = Object.keys(obj);
-    var i = keys.length;
-    while (i--) {
-      var k = keys[i];
-      target[k] = obj[k];
-    }
-    return target;
-  }
-
   private clone(obj: any) {
-    return this.copyInto(obj, {});
+    return Object.assign({}, obj);
   }
 
   private connectToServer(
-    url: URL,
+    url: string,
     vhost: string,
     username: string,
     password: string,
     heartbeat: number,
   ) {
     this.client = new Client({
-      brokerURL: url.toString(),
+      brokerURL: url,
       connectHeaders: {
         host: vhost,
         login: username,
