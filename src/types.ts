@@ -30,7 +30,6 @@ export type RBBTProperties = {
 };
 
 export type RBBTExchangeParams = {
-  type?: "direct" | "fanout" | "topic" | "headers";
   passive?: boolean;
   durable?: boolean;
   autoDelete?: boolean;

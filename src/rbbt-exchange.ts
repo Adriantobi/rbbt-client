@@ -2,6 +2,7 @@ import { RBBTError } from "./rbbt-error";
 import { RBBTClient } from "./rbbt-client";
 import { RBBTQueue } from "./rbbt-queue";
 import { RBBTExchangeParams, RBBTQueueParams } from "./types";
+import { RBBTMessage } from "./rbbt-message";
 
 export class RBBTExchange {
   readonly connection: RBBTClient;
@@ -21,34 +22,23 @@ export class RBBTExchange {
 
   open() {
     if (this.connection.client && this.connection.client?.state === 0) {
-      this.connection.client.onConnect = () => {
-        this.connection.client?.publish({
-          destination: `/${
-            this.options?.type ? this.options.type : "topic"
-          }/${this.name}`,
-          body: JSON.stringify({ type: "open" }),
+      try {
+        this.connection.client?.subscribe(`/exchange/${this.name}`, (msg) => {
+          const message = new RBBTMessage(this);
+          if (msg.binaryBody) message.body = msg.binaryBody;
+          else message.body = msg.body;
+          message.properties = msg.headers;
         });
-
-        // this.connection.client?.subscribe(
-        //   `/${this.options?.type ? this.options.type : "topic"}/${this.name}`,
-        //   (msg) => {
-        //     const data = JSON.parse(msg.body);
-        //     if (data.type === "close") {
-        //       this.closed = true;
-        //     }
-        //   },
-        // );
-      };
+      } catch (error) {
+        new RBBTError(error as string, this.connection);
+      }
     } else new RBBTError("Client not connected", this.connection);
 
     return this;
   }
 
   close() {
-    this.connection.client?.publish({
-      destination: `/topic/${this.name}`,
-      body: JSON.stringify({ type: "close" }),
-    });
+    this.connection.client?.unsubscribe(`/exchange/${this.name}`);
 
     this.closed = true;
     this.connection.client?.unsubscribe(`/topic/${this.name}`);

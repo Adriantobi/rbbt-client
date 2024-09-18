@@ -28,6 +28,22 @@ export class RBBTQueue {
     this.durable = durable;
     this.autoDelete = autoDelete;
     this.exclusive = exclusive;
+
+    this.channel.connection.client?.subscribe(
+      `/queue/${this.name}`,
+      (msg) => {
+        const message = new RBBTMessage(this.channel);
+        if (msg.binaryBody) message.body = msg.binaryBody;
+        else message.body = msg.body;
+        message.properties = msg.headers;
+      },
+      {
+        exclusive: exclusive as any,
+        passive: passive as any,
+        durable: durable as any,
+        auto_delete: autoDelete as any,
+      },
+    );
   }
 
   bind(exchange: string, routingKey: string) {
