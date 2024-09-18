@@ -2,8 +2,7 @@ import { RBBTExchange } from "./rbbt-exchange";
 import { RBBTProperties } from "./types";
 
 export class RBBTMessage {
-  channel: RBBTExchange;
-  exchange: string = "";
+  exchange: RBBTExchange;
   routingKey: string = "";
   properties: RBBTProperties = {};
   bodySize = 0;
@@ -16,7 +15,7 @@ export class RBBTMessage {
   replyCode?: number;
   replyText?: string;
 
-  constructor(channel: RBBTExchange) {
-    this.channel = channel;
+  constructor(exchange: RBBTExchange) {
+    this.exchange = exchange;
   }
 }

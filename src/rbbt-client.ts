@@ -2,6 +2,7 @@ import { RBBTExchange } from "./rbbt-exchange";
 import { RBBTError } from "./rbbt-error";
 import { Client } from "@stomp/stompjs";
 import { RBBTExchangeParams } from "./types";
+import { RxStomp } from "@stomp/rx-stomp";
 
 export class RBBTClient {
   url: string;
@@ -14,9 +15,11 @@ export class RBBTClient {
   blocked?: string;
   channelMax = 0;
   frameMax?: number;
-  heartbeat?: number = 5000;
+  heartbeatIncoming?: number = 5000;
+  heartbeatOutgoing?: number = 5000;
   onerror?: (error: any) => void;
-  public client: Client | null = null;
+  reconnectionDelay = 5000;
+  public client: RxStomp | null = null;
 
   constructor(
     url: string,
@@ -38,14 +41,24 @@ export class RBBTClient {
     const vhost = this.clone(this.vhost ? this.vhost : "/");
     const username = this.clone(this.username ? this.username : "guest");
     const password = this.clone(this.password ? this.password : "guest");
-    const heartbeat = this.clone(this.heartbeat);
+    const heartbeatIncoming = this.clone(this.heartbeatIncoming);
+    const heartbeatOutgoing = this.clone(this.heartbeatOutgoing);
+    const reconnectionDelay = this.clone(this.reconnectionDelay);
 
     if (!url.split("://")[0].includes("ws")) {
       new RBBTError("Invalid protocol, use ws or wss", this);
     }
 
     // Connect to the amqp server
-    this.connectToServer(url, vhost, username, password, heartbeat);
+    this.connectToServer(
+      url,
+      vhost,
+      username,
+      password,
+      heartbeatIncoming,
+      heartbeatOutgoing,
+      reconnectionDelay,
+    );
     return this;
   }
 
@@ -67,18 +80,23 @@ export class RBBTClient {
     vhost: string,
     username: string,
     password: string,
-    heartbeat: number,
+    heartbeatIncoming: number,
+    heartbeatOutgoing: number,
+    reconnectDelay: number,
   ) {
-    this.client = new Client({
-      brokerURL: url,
-      connectHeaders: {
-        host: vhost,
-        login: username,
-        passcode: password,
-      },
-      heartbeatIncoming: heartbeat,
-      heartbeatOutgoing: heartbeat,
-    });
+    this.client = new RxStomp(
+      new Client({
+        brokerURL: url,
+        connectHeaders: {
+          host: vhost,
+          login: username,
+          passcode: password,
+        },
+        heartbeatIncoming: heartbeatIncoming,
+        heartbeatOutgoing: heartbeatOutgoing,
+        reconnectDelay: reconnectDelay,
+      }),
+    );
 
     this.client.activate();
     this.closed = false;

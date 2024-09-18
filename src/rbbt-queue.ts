@@ -10,6 +10,7 @@ export class RBBTQueue {
   readonly durable: boolean;
   readonly autoDelete: boolean;
   readonly exclusive: boolean;
+  private watch: any;
 
   constructor(
     exchange: RBBTExchange,
@@ -33,28 +34,24 @@ export class RBBTQueue {
   private create() {
     if (
       this.exchange.connection.client &&
-      this.exchange.connection.client?.state === 0
+      this.exchange.connection.client?.active
     ) {
       if (this.exchange.closed === true)
         new RBBTError("Exchange is closed", this.exchange.connection);
       else {
-        this.exchange.connection.client.onConnect = () => {
-          this.exchange.connection.client?.subscribe(
-            `/${this.name ? "queue" : "temp queue"}/${this.name}`,
-            (msg) => {
-              const message = new RBBTMessage(this.exchange);
-              if (msg.binaryBody) message.body = msg.binaryBody;
-              else message.body = msg.body;
-              message.properties = msg.headers;
-            },
-            {
-              exclusive: this.exclusive as any,
-              passive: this.passive as any,
-              durable: this.durable as any,
-              auto_delete: this.autoDelete as any,
-            },
-          );
-        };
+        this.watch = this.exchange.connection.client
+          .watch(`/${this.name ? "queue" : "temp queue"}/${this.name}`, {
+            passive: this.passive as any,
+            durable: this.durable as any,
+            "auto-delete": this.autoDelete as any,
+            exclusive: this.exclusive as any,
+          })
+          .subscribe((msg) => {
+            const message = new RBBTMessage(this.exchange);
+            if (msg.binaryBody) message.body = msg.binaryBody;
+            else message.body = msg.body;
+            message.properties = msg.headers;
+          });
       }
     } else new RBBTError("Client not connected", this.exchange.connection);
   }
@@ -62,31 +59,29 @@ export class RBBTQueue {
   bind(exchange: string, routingKey: string = "") {
     if (
       this.exchange.connection.client &&
-      this.exchange.connection.client?.state === 0
+      this.exchange.connection.client?.active
     ) {
       if (this.exchange.closed === true)
         new RBBTError("Exchange is closed", this.exchange.connection);
       else {
-        this.exchange.connection.client.onConnect = () => {
-          this.exchange.connection.client?.subscribe(
-            `/exchange/${exchange}/${routingKey}`,
-            (msg) => {
-              const message = new RBBTMessage(this.exchange);
-              if (msg.binaryBody) message.body = msg.binaryBody;
-              else message.body = msg.body;
-              message.properties = msg.headers;
-            },
-            {
-              "x-queue-name": `${this.name}`,
-              exchange,
-              routing_key: routingKey,
-              exclusive: this.exclusive as any,
-              passive: this.passive as any,
-              durable: this.durable as any,
-              auto_delete: this.autoDelete as any,
-            },
-          );
-        };
+        this.watch.unsubscribe();
+        this.watch = this.exchange.connection.client
+          .watch(`/exchange/${exchange}/${routingKey}`, {
+            "x-queue-name": `${this.name}`,
+            exchange,
+            routing_key: routingKey,
+            exclusive: this.exclusive as any,
+            passive: this.passive as any,
+            durable: this.durable as any,
+            "auto-delete": this.autoDelete as any,
+          })
+          .subscribe((msg) => {
+            const message = new RBBTMessage(this.exchange);
+            if (msg.binaryBody) message.body = msg.binaryBody;
+            else message.body = msg.body;
+            message.properties = msg.headers;
+            console.log(message);
+          });
       }
     } else new RBBTError("Client not connected", this.exchange.connection);
   }
@@ -94,21 +89,26 @@ export class RBBTQueue {
   unbind(exchange: string, routingKey: string = "") {
     if (
       this.exchange.connection.client &&
-      this.exchange.connection.client?.state === 0
+      this.exchange.connection.client?.active
     ) {
       if (this.exchange.closed === true)
         new RBBTError("Exchange is closed", this.exchange.connection);
       else {
-        this.exchange.connection.client.onConnect = () => {
-          this.exchange.connection.client?.unsubscribe(
-            `/exchange/${exchange}/${routingKey}`,
-            {
-              "x-queue-name": `${this.name}`,
+        this.watch.unsubscribe();
+        this.watch = this.exchange.connection.client
+          .watch(`/${this.name !== "" ? "queue" : "temp queue"}/${this.name}`, {
+            "x-unbind": JSON.stringify({
               exchange,
               routing_key: routingKey,
-            },
-          );
-        };
+            }),
+          })
+          .subscribe((msg) => {
+            const message = new RBBTMessage(this.exchange);
+            if (msg.binaryBody) message.body = msg.binaryBody;
+            else message.body = msg.body;
+            message.properties = msg.headers;
+            console.log(message);
+          });
       }
     } else new RBBTError("Client not connected", this.exchange.connection);
   }
@@ -124,25 +124,26 @@ export class RBBTQueue {
   ) {
     if (
       this.exchange.connection.client &&
-      this.exchange.connection.client?.state === 0
+      this.exchange.connection.client?.active
     ) {
-      this.exchange.connection.client.onConnect = () => {
-        this.exchange.connection.client?.subscribe(
-          `/queue/${this.name}`,
-          (msg) => {
+      if (this.exchange.closed === true)
+        new RBBTError("Exchange is closed", this.exchange.connection);
+      else {
+        this.watch.unsubscribe();
+        this.watch = this.exchange.connection.client
+          .watch(`/queue/${this.name}`, {
+            exclusive: exclusive as any,
+          })
+          .subscribe((msg) => {
             callback(msg);
             if (!noAck) msg.ack();
             else msg.nack();
-          },
-          {
-            exclusive: exclusive as any,
-          },
-        );
-      };
+          });
+      }
     } else new RBBTError("Client not connected", this.exchange.connection);
   }
 
   unsubscribe() {
-    return this.exchange.connection.client?.unsubscribe(`/queue/${this.name}`);
+    this.watch.unsubscribe();
   }
 }

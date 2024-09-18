@@ -7,6 +7,7 @@ import { RBBTMessage } from "./rbbt-message";
 export class RBBTExchange {
   readonly connection: RBBTClient;
   readonly name: string;
+  private watch: any;
   closed = false;
   options: RBBTExchangeParams;
 
@@ -22,16 +23,16 @@ export class RBBTExchange {
   }
 
   private open() {
-    if (this.connection.client && this.connection.client?.state === 0) {
+    if (this.connection.client && this.connection.client?.active) {
       try {
-        this.connection.client.onConnect = () => {
-          this.connection.client?.subscribe(`/exchange/${this.name}`, (msg) => {
+        this.watch = this.connection.client
+          ?.watch(`/exchange/${this.name}`)
+          .subscribe((msg) => {
             const message = new RBBTMessage(this);
             if (msg.binaryBody) message.body = msg.binaryBody;
             else message.body = msg.body;
-            message.properties = msg.headers;
+            console.log(message);
           });
-        };
       } catch (e) {
         new RBBTError(e as string, this.connection);
       }
@@ -41,10 +42,8 @@ export class RBBTExchange {
   }
 
   close() {
-    this.connection.client?.unsubscribe(`/exchange/${this.name}`);
-
+    this.watch.unsubscribe();
     this.closed = true;
-    this.connection.client?.unsubscribe(`/topic/${this.name}`);
     this.connection.exchanges = this.connection.exchanges.filter(
       (exchange) => exchange.name !== this.name,
     );
