@@ -27,7 +27,10 @@ export class RBBTQueue {
     this.durable = durable;
     this.autoDelete = autoDelete;
     this.exclusive = exclusive;
+    this.create();
+  }
 
+  private create() {
     if (
       this.exchange.connection.client &&
       this.exchange.connection.client?.state === 0
@@ -37,7 +40,7 @@ export class RBBTQueue {
       else {
         this.exchange.connection.client.onConnect = () => {
           this.exchange.connection.client?.subscribe(
-            `/queue/${this.name}`,
+            `/${this.name ? "queue" : "temp queue"}/${this.name}`,
             (msg) => {
               const message = new RBBTMessage(this.exchange);
               if (msg.binaryBody) message.body = msg.binaryBody;
@@ -45,10 +48,10 @@ export class RBBTQueue {
               message.properties = msg.headers;
             },
             {
-              exclusive: exclusive as any,
-              passive: passive as any,
-              durable: durable as any,
-              auto_delete: autoDelete as any,
+              exclusive: this.exclusive as any,
+              passive: this.passive as any,
+              durable: this.durable as any,
+              auto_delete: this.autoDelete as any,
             },
           );
         };
@@ -77,6 +80,10 @@ export class RBBTQueue {
               "x-queue-name": `${this.name}`,
               exchange,
               routing_key: routingKey,
+              exclusive: this.exclusive as any,
+              passive: this.passive as any,
+              durable: this.durable as any,
+              auto_delete: this.autoDelete as any,
             },
           );
         };
