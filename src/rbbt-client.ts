@@ -19,6 +19,7 @@ export class RBBTClient {
   heartbeatOutgoing?: number = 5000;
   onerror?: (error: any) => void;
   reconnectionDelay = 5000;
+  debug: (msg: string) => void = () => {};
   public client: RxStomp | null = null;
 
   constructor(
@@ -95,6 +96,7 @@ export class RBBTClient {
         heartbeatIncoming: heartbeatIncoming,
         heartbeatOutgoing: heartbeatOutgoing,
         reconnectDelay: reconnectDelay,
+        debug: this.debug,
       }),
     );
 
