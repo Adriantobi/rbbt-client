@@ -1,4 +1,3 @@
-import { RxStompRPC } from "@stomp/rx-stomp";
 import { RBBTError } from "./rbbt-error";
 import { RBBTExchange } from "./rbbt-exchange";
 import { RBBTMessage } from "./rbbt-message";
@@ -12,7 +11,7 @@ export class RBBTQueue {
   readonly autoDelete: boolean;
   readonly exclusive: boolean;
   private watch: any;
-  private exchangeName: string = "";
+  private isBound: boolean = false;
   private routingKey: string = "";
 
   constructor(
@@ -59,7 +58,7 @@ export class RBBTQueue {
     } else new RBBTError("Client not connected", this.exchange.connection);
   }
 
-  bind(exchange: string, routingKey: string = "") {
+  bind(routingKey: string = "") {
     if (
       this.exchange.connection.client &&
       this.exchange.connection.client?.active
@@ -67,13 +66,13 @@ export class RBBTQueue {
       if (this.exchange.closed === true)
         new RBBTError("Exchange is closed", this.exchange.connection);
       else {
-        this.exchangeName = exchange;
+        this.isBound = true;
         this.routingKey = routingKey;
         this.watch.unsubscribe();
         this.watch = this.exchange.connection.client
-          .watch(`/exchange/${exchange}/bind-queue/${routingKey}`, {
+          .watch(`/exchange/${this.exchange.name}/${routingKey}`, {
             "x-queue-name": `${this.name}`,
-            exchange: exchange,
+            exchange: this.exchange.name,
             routing_key: routingKey,
           })
           .subscribe((msg) => {
@@ -87,7 +86,7 @@ export class RBBTQueue {
     } else new RBBTError("Client not connected", this.exchange.connection);
   }
 
-  unbind(exchange: string, routingKey: string = "") {
+  unbind(routingKey: string = "") {
     if (
       this.exchange.connection.client &&
       this.exchange.connection.client?.active
@@ -95,13 +94,13 @@ export class RBBTQueue {
       if (this.exchange.closed === true)
         new RBBTError("Exchange is closed", this.exchange.connection);
       else {
-        this.exchangeName = "";
+        this.isBound = false;
         this.routingKey = "";
         this.watch.unsubscribe();
         this.watch = this.exchange.connection.client
           .watch(`/queue/${this.name}`, {
             "x-unbind": JSON.stringify({
-              exchange: exchange,
+              exchange: this.exchange.name,
               routing_key: routingKey,
             }),
             durable: this.durable as any,
@@ -137,17 +136,14 @@ export class RBBTQueue {
         new RBBTError("Exchange is closed", this.exchange.connection);
       else {
         this.watch.unsubscribe();
-        if (this.exchangeName !== "") {
+        if (this.isBound) {
           this.watch.unsubscribe();
           this.watch = this.exchange.connection.client
-            .watch(
-              `/exchange/${this.exchangeName}/bind-queue/${this.routingKey}`,
-              {
-                "x-queue-name": `${this.name}`,
-                exchange: this.exchangeName,
-                routing_key: this.routingKey,
-              },
-            )
+            .watch(`/exchange/${this.exchange.name}/${this.routingKey}`, {
+              "x-queue-name": `${this.name}`,
+              exchange: this.exchange.name,
+              routing_key: this.routingKey,
+            })
             .subscribe((msg) => {
               const message = new RBBTMessage(this.exchange);
               if (msg.binaryBody) message.body = msg.binaryBody;

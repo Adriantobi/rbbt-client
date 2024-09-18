@@ -117,12 +117,12 @@ export class RBBTClient {
     }
 
     if (name) {
-      const exchange = this.exchanges.find((ch) => ch.name === name);
+      const exchange = this.exchanges.find((ex) => ex.name === name);
       if (exchange) return exchange;
     }
 
     if (!name)
-      name = this.exchanges.findIndex((ch) => ch === undefined).toString();
+      name = this.exchanges.findIndex((ex) => ex === undefined).toString();
     if (this.exchanges.length + 1 > this.channelMax && this.channelMax > 0)
       new RBBTError("Max number of channels reached", this);
 

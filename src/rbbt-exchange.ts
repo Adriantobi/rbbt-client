@@ -8,6 +8,7 @@ export class RBBTExchange {
   readonly connection: RBBTClient;
   readonly name: string;
   private watch: any;
+  queues: RBBTQueue[];
   closed = false;
   options: RBBTExchangeParams;
 
@@ -19,6 +20,7 @@ export class RBBTExchange {
     this.connection = connection;
     this.name = name;
     this.options = options;
+    this.queues = [];
     this.open();
   }
 
@@ -58,11 +60,40 @@ export class RBBTExchange {
       exclusive = name === "",
     } = {} as RBBTQueueParams,
   ) {
-    return new RBBTQueue(this, name, {
+    if (this.connection.closed) {
+      new RBBTError("Exchange is closed", this.connection);
+    }
+
+    if (this.closed) {
+      new RBBTError("Exchange is closed", this.connection);
+    }
+
+    if (name) {
+      if (name === "") {
+        const queue = new RBBTQueue(this, name, {
+          passive,
+          durable,
+          autoDelete,
+          exclusive,
+        });
+        this.queues.push(queue);
+        return queue;
+      }
+
+      const queue = this.queues.find((q) => q.name === name);
+      if (queue) return queue;
+    }
+
+    if (!name)
+      name = this.queues.findIndex((ex) => ex === undefined).toString();
+
+    const queue = new RBBTQueue(this, name, {
       passive,
       durable,
       autoDelete,
       exclusive,
     });
+    this.queues.push(queue);
+    return queue;
   }
 }
