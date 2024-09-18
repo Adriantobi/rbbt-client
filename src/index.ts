@@ -1,5 +1,5 @@
 export { RBBTClient } from "./rbbt-client";
-export { RBBTChannel } from "./rbbt-channel";
+export { RBBTExchange } from "./rbbt-exchange";
 export { RBBTMessage } from "./rbbt-message";
 export { RBBTQueue } from "./rbbt-queue";
 export { RBBTError } from "./rbbt-error";

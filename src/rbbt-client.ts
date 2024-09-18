@@ -1,6 +1,7 @@
-import { RBBTChannel } from "./rbbt-channel";
+import { RBBTExchange } from "./rbbt-exchange";
 import { RBBTError } from "./rbbt-error";
 import { Client } from "@stomp/stompjs";
+import { RBBTExchangeParams } from "./types";
 
 export class RBBTClient {
   url: string;
@@ -8,7 +9,7 @@ export class RBBTClient {
   username: string;
   password: string;
   name?: string;
-  channels: RBBTChannel[];
+  exchanges: RBBTExchange[];
   closed = true;
   blocked?: string;
   channelMax = 0;
@@ -29,7 +30,7 @@ export class RBBTClient {
     this.username = username;
     this.password = password;
     this.name = name;
-    this.channels = [];
+    this.exchanges = [];
   }
 
   connect() {
@@ -90,23 +91,23 @@ export class RBBTClient {
     }
   }
 
-  channel(id?: number) {
+  exchange(name?: string, options = {} as RBBTExchangeParams) {
     if (this.closed) {
       new RBBTError("Client is closed", this);
     }
 
-    if (id && id > 0) {
-      const channel = this.channels[id];
-      if (channel) return channel;
+    if (name) {
+      const exchange = this.exchanges.find((ch) => ch.name === name);
+      if (exchange) return exchange;
     }
 
-    if (!id) id = this.channels.findIndex((ch) => ch === undefined);
-    if (id === -1) id = this.channels.length;
-    if (id > this.channelMax && this.channelMax > 0)
+    if (!name)
+      name = this.exchanges.findIndex((ch) => ch === undefined).toString();
+    if (this.exchanges.length + 1 > this.channelMax && this.channelMax > 0)
       new RBBTError("Max number of channels reached", this);
 
-    const channel = new RBBTChannel(this, id);
-    this.channels[id] = channel;
-    return channel.open();
+    const exchange = new RBBTExchange(this, name, options);
+    this.exchanges.push(exchange);
+    return exchange.open();
   }
 }

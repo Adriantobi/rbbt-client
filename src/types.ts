@@ -28,3 +28,12 @@ export type RBBTProperties = {
   appId?: string;
   clusterId?: string;
 };
+
+export type RBBTExchangeParams = {
+  type?: "direct" | "fanout" | "topic" | "headers";
+  passive?: boolean;
+  durable?: boolean;
+  autoDelete?: boolean;
+  internal?: boolean;
+  args?: Record<string, any>;
+};

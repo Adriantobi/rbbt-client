@@ -1,13 +1,13 @@
-import { RBBTChannel } from "./rbbt-channel";
+import { RBBTExchange } from "./rbbt-exchange";
 import { RBBTProperties } from "./types";
 
 export class RBBTMessage {
-  channel: RBBTChannel;
+  channel: RBBTExchange;
   exchange: string = "";
   routingKey: string = "";
   properties: RBBTProperties = {};
   bodySize = 0;
-  body: Uint8Array | null = null;
+  body: Uint8Array | string | null = null;
   bodyPos = 0;
   deliveryTag = 0;
   consumerTag = "";
@@ -16,7 +16,7 @@ export class RBBTMessage {
   replyCode?: number;
   replyText?: string;
 
-  constructor(channel: RBBTChannel) {
+  constructor(channel: RBBTExchange) {
     this.channel = channel;
   }
 }

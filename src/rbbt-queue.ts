@@ -1,11 +1,11 @@
 import { RBBTError } from "./rbbt-error";
-import { RBBTChannel } from "./rbbt-channel";
+import { RBBTExchange } from "./rbbt-exchange";
 import { RBBTClient } from "./rbbt-client";
 import { RBBTMessage } from "./rbbt-message";
 import { RBBTConsumeParams, RBBTQueueParams } from "./types";
 
 export class RBBTQueue {
-  readonly channel: RBBTChannel;
+  readonly channel: RBBTExchange;
   readonly name: string;
   readonly passive: boolean;
   readonly durable: boolean;
@@ -13,7 +13,7 @@ export class RBBTQueue {
   readonly exclusive: boolean;
 
   constructor(
-    channel: RBBTChannel,
+    channel: RBBTExchange,
     name: string,
     {
       passive = false,
@@ -31,13 +31,20 @@ export class RBBTQueue {
   }
 
   bind(exchange: string, routingKey: string) {
-    return this.channel.connection.client?.publish({
-      destination: `/exchange/${exchange}/${routingKey}`,
-      body: JSON.stringify({ queue: this.name }),
-      headers: {
-        "x-bind": `/exchange/${exchange}/${routingKey}`,
+    return this.channel.connection.client?.subscribe(
+      `/exchange/${exchange}/${routingKey}`,
+      (msg) => {
+        const message = new RBBTMessage(this.channel);
+        if (msg.binaryBody) message.body = msg.binaryBody;
+        else message.body = msg.body;
+        message.properties = msg.headers;
       },
-    });
+      {
+        "x-queue-name": `${this.name}`,
+        exchange,
+        routing_key: routingKey,
+      },
+    );
   }
 
   subscribe(
@@ -51,7 +58,14 @@ export class RBBTQueue {
   ) {
     return this.channel.connection.client?.subscribe(
       `/queue/${this.name}`,
-      callback,
+      (msg) => {
+        callback(msg);
+        if (!noAck) msg.ack();
+        else msg.nack();
+      },
+      {
+        exclusive: exclusive as any,
+      },
     );
   }
 
