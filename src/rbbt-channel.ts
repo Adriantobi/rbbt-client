@@ -14,17 +14,19 @@ export class RBBTChannel {
   }
 
   open() {
-    this.connection.client?.publish({
-      destination: `/topic/${this.id}`,
-      body: JSON.stringify({ type: "open" }),
-    });
+    if (this.connection.client) {
+      this.connection.client?.publish({
+        destination: `/topic/${this.id}`,
+        body: JSON.stringify({ type: "open" }),
+      });
 
-    this.connection.client?.subscribe(`/topic/${this.id}`, (msg) => {
-      const data = JSON.parse(msg.body);
-      if (data.type === "close") {
-        this.closed = true;
-      }
-    });
+      this.connection.client?.subscribe(`/topic/${this.id}`, (msg) => {
+        const data = JSON.parse(msg.body);
+        if (data.type === "close") {
+          this.closed = true;
+        }
+      });
+    } else new RBBTError("Client not connected", this.connection);
 
     return this;
   }

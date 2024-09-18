@@ -49,7 +49,16 @@ export class RBBTClient {
   }
 
   private clone(obj: any) {
-    return Object.assign({}, obj);
+    if (typeof obj === "string") return (" " + obj).slice(1);
+    if (
+      typeof obj === "number" ||
+      typeof obj === "boolean" ||
+      typeof obj === "undefined"
+    )
+      return obj;
+    if (obj instanceof Date) return new Date(obj.getTime());
+    if (obj instanceof Array) return obj.slice(0);
+    if (typeof obj === "object") return Object.assign({}, obj);
   }
 
   private connectToServer(
