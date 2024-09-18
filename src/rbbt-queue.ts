@@ -24,7 +24,7 @@ export class RBBTQueue {
     } = {} as RBBTQueueParams,
   ) {
     this.exchange = exchange;
-    this.name = name;
+    this.name = name === "" ? this.generateQueueName() : name;
     this.passive = passive;
     this.durable = durable;
     this.autoDelete = autoDelete;
@@ -40,39 +40,19 @@ export class RBBTQueue {
       if (this.exchange.closed === true)
         new RBBTError("Exchange is closed", this.exchange.connection);
       else {
-        if (this.name === "") {
-          this.exchange.connection.client.publish({
-            destination: `/exchange/${this.exchange.name}`,
-            body: `Create temp queue ${this.exchange.name}-reply`,
-            headers: {
-              "reply-to": `/temp-queue/${this.exchange.name}-reply`,
-            },
+        this.watch = this.exchange.connection.client
+          .watch(`/queue/${this.name}`, {
+            passive: this.passive as any,
+            durable: this.durable as any,
+            "auto-delete": this.autoDelete as any,
+            exclusive: this.exclusive as any,
+          })
+          .subscribe((msg) => {
+            const message = new RBBTMessage(this.exchange);
+            if (msg.binaryBody) message.body = msg.binaryBody;
+            else message.body = msg.body;
+            message.properties = msg.headers;
           });
-
-          this.watch = this.exchange.connection.client
-            .watch(`/temp-queue/${this.exchange.name}-reply`)
-            .subscribe((msg) => {
-              const message = new RBBTMessage(this.exchange);
-              if (msg.binaryBody) message.body = msg.binaryBody;
-              else message.body = msg.body;
-              message.properties = msg.headers;
-            });
-        } else {
-          this.watch = this.exchange.connection.client
-            .watch(`/"queue"/${this.name}`, {
-              passive: this.passive as any,
-              durable: this.durable as any,
-              "auto-delete": this.autoDelete as any,
-              exclusive: this.exclusive as any,
-            })
-            .subscribe((msg) => {
-              const message = new RBBTMessage(this.exchange);
-              if (msg.binaryBody) message.body = msg.binaryBody;
-              else message.body = msg.body;
-              message.properties = msg.headers;
-            });
-        }
-        return this.watch;
       }
     } else new RBBTError("Client not connected", this.exchange.connection);
   }
@@ -170,5 +150,15 @@ export class RBBTQueue {
 
   unsubscribe() {
     this.watch.unsubscribe();
+  }
+
+  private generateQueueName() {
+    const chars =
+      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()_+1234567890";
+    let uniqueId = "";
+    for (let i = 0; i < 22; i++) {
+      uniqueId += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return `rbbt.gen-${uniqueId}`;
   }
 }
