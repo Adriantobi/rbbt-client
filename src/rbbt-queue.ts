@@ -5,7 +5,7 @@ import { RBBTMessage } from "./rbbt-message";
 import { RBBTConsumeParams, RBBTQueueParams } from "./types";
 
 export class RBBTQueue {
-  readonly channel: RBBTExchange;
+  readonly exchange: RBBTExchange;
   readonly name: string;
   readonly passive: boolean;
   readonly durable: boolean;
@@ -13,7 +13,7 @@ export class RBBTQueue {
   readonly exclusive: boolean;
 
   constructor(
-    channel: RBBTExchange,
+    exchange: RBBTExchange,
     name: string,
     {
       passive = false,
@@ -22,45 +22,63 @@ export class RBBTQueue {
       exclusive = name === "",
     } = {} as RBBTQueueParams,
   ) {
-    this.channel = channel;
+    this.exchange = exchange;
     this.name = name;
     this.passive = passive;
     this.durable = durable;
     this.autoDelete = autoDelete;
     this.exclusive = exclusive;
 
-    this.channel.connection.client?.subscribe(
-      `/queue/${this.name}`,
-      (msg) => {
-        const message = new RBBTMessage(this.channel);
-        if (msg.binaryBody) message.body = msg.binaryBody;
-        else message.body = msg.body;
-        message.properties = msg.headers;
-      },
-      {
-        exclusive: exclusive as any,
-        passive: passive as any,
-        durable: durable as any,
-        auto_delete: autoDelete as any,
-      },
-    );
+    if (
+      this.exchange.connection.client &&
+      this.exchange.connection.client?.state === 0
+    ) {
+      if (this.exchange.closed === true)
+        new RBBTError("Exchange is closed", this.exchange.connection);
+      else {
+        this.exchange.connection.client.onConnect = () => {
+          this.exchange.connection.client?.subscribe(
+            `/queue/${this.name}`,
+            (msg) => {
+              const message = new RBBTMessage(this.exchange);
+              if (msg.binaryBody) message.body = msg.binaryBody;
+              else message.body = msg.body;
+              message.properties = msg.headers;
+            },
+            {
+              exclusive: exclusive as any,
+              passive: passive as any,
+              durable: durable as any,
+              auto_delete: autoDelete as any,
+            },
+          );
+        };
+      }
+    } else new RBBTError("Client not connected", this.exchange.connection);
   }
 
   bind(exchange: string, routingKey: string) {
-    return this.channel.connection.client?.subscribe(
-      `/exchange/${exchange}/${routingKey}`,
-      (msg) => {
-        const message = new RBBTMessage(this.channel);
-        if (msg.binaryBody) message.body = msg.binaryBody;
-        else message.body = msg.body;
-        message.properties = msg.headers;
-      },
-      {
-        "x-queue-name": `${this.name}`,
-        exchange,
-        routing_key: routingKey,
-      },
-    );
+    if (
+      this.exchange.connection.client &&
+      this.exchange.connection.client?.state === 0
+    ) {
+      this.exchange.connection.client.onConnect = () => {
+        this.exchange.connection.client?.subscribe(
+          `/exchange/${exchange}/${routingKey}`,
+          (msg) => {
+            const message = new RBBTMessage(this.exchange);
+            if (msg.binaryBody) message.body = msg.binaryBody;
+            else message.body = msg.body;
+            message.properties = msg.headers;
+          },
+          {
+            "x-queue-name": `${this.name}`,
+            exchange,
+            routing_key: routingKey,
+          },
+        );
+      };
+    } else new RBBTError("Client not connected", this.exchange.connection);
   }
 
   subscribe(
@@ -72,20 +90,27 @@ export class RBBTQueue {
     } = {} as RBBTConsumeParams,
     callback: (msg: any) => void,
   ) {
-    return this.channel.connection.client?.subscribe(
-      `/queue/${this.name}`,
-      (msg) => {
-        callback(msg);
-        if (!noAck) msg.ack();
-        else msg.nack();
-      },
-      {
-        exclusive: exclusive as any,
-      },
-    );
+    if (
+      this.exchange.connection.client &&
+      this.exchange.connection.client?.state === 0
+    ) {
+      this.exchange.connection.client.onConnect = () => {
+        this.exchange.connection.client?.subscribe(
+          `/queue/${this.name}`,
+          (msg) => {
+            callback(msg);
+            if (!noAck) msg.ack();
+            else msg.nack();
+          },
+          {
+            exclusive: exclusive as any,
+          },
+        );
+      };
+    } else new RBBTError("Client not connected", this.exchange.connection);
   }
 
   unsubscribe() {
-    return this.channel.connection.client?.unsubscribe(`/queue/${this.name}`);
+    return this.exchange.connection.client?.unsubscribe(`/queue/${this.name}`);
   }
 }

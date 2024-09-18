@@ -21,7 +21,8 @@ const rbbt = new RBBTClient("ws://localhost:2400", "/", "guest", "guest");
 // Connect to the RabbitMQ broker
 const conn = rbbt.connect();
 // Create a new channel
-const channel = conn.channel();
+const ex = conn.exchange("amq.direct");
+ex.open();
 // Create a new exclusive queue
 const q = channel.queue("", { exclusive: true });
 // Bind the queue to an exchange
@@ -59,9 +60,10 @@ Below is a full example demonstrating how to set up a connection, create a chann
 
 ```javascript
 import { RBBTClient } from "rbbt-client";
-const rbbt = new RBBTClient("amqp://localhost:2400", "/", "guest", "guest");
+const rbbt = new RBBTClient("ws://localhost:2400", "/", "guest", "guest");
 const conn = rbbt.connect();
-const channel = conn.channel();
+const ex = conn.exchange("amq.direct");
+ex.open();
 const q = channel.queue("", { exclusive: true });
 q.bind("amq.direct", "test");
 q.subscribe({}, (msg) => {

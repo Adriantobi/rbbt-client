@@ -23,14 +23,16 @@ export class RBBTExchange {
   open() {
     if (this.connection.client && this.connection.client?.state === 0) {
       try {
-        this.connection.client?.subscribe(`/exchange/${this.name}`, (msg) => {
-          const message = new RBBTMessage(this);
-          if (msg.binaryBody) message.body = msg.binaryBody;
-          else message.body = msg.body;
-          message.properties = msg.headers;
-        });
-      } catch (error) {
-        new RBBTError(error as string, this.connection);
+        this.connection.client.onConnect = () => {
+          this.connection.client?.subscribe(`/exchange/${this.name}`, (msg) => {
+            const message = new RBBTMessage(this);
+            if (msg.binaryBody) message.body = msg.binaryBody;
+            else message.body = msg.body;
+            message.properties = msg.headers;
+          });
+        };
+      } catch (e) {
+        new RBBTError(e as string, this.connection);
       }
     } else new RBBTError("Client not connected", this.connection);
 
