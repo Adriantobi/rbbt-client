@@ -7,7 +7,16 @@
   "scripts": {
     "build": "tsup"
   },
-  "keywords": [],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Adriantobi/rbbt-client.git"
+  },
+  "keywords": [
+    "rabbitmq",
+    "stomp",
+    "rxjs",
+    "broker"
+  ],
   "author": "",
   "license": "ISC",
   "description": "",
