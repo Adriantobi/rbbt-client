@@ -18,7 +18,7 @@ export class RBBTExchange {
     options = {} as RBBTExchangeParams,
   ) {
     this.connection = connection;
-    this.name = name;
+    this.name = name === "" ? this.generateExchangeName() : name;
     this.options = options;
     this.queues = [];
     this.open();
@@ -38,7 +38,6 @@ export class RBBTExchange {
             const message = new RBBTMessage(this);
             if (msg.binaryBody) message.body = msg.binaryBody;
             else message.body = msg.body;
-            console.log(message);
           });
       } catch (e) {
         new RBBTError(e as string, this.connection);
@@ -91,10 +90,12 @@ export class RBBTExchange {
             exclusive: exclusive as any,
             passive: this.options.passive as any,
             durable: this.options.durable as any,
+            internal: this.options.internal as any,
             "auto-delete": this.options.autoDelete as any,
             ack: noAck ? "client" : "client-individual",
           })
           .subscribe((msg) => {
+            console.log(msg);
             const message = new RBBTMessage(this);
             if (msg.binaryBody) message.body = msg.binaryBody;
             else message.body = msg.body;
@@ -141,5 +142,15 @@ export class RBBTExchange {
     });
     this.queues.push(queue);
     return queue;
+  }
+
+  private generateExchangeName() {
+    const chars =
+      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()_+1234567890";
+    let uniqueId = "";
+    for (let i = 0; i < 10; i++) {
+      uniqueId += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return `rbbt.${uniqueId}`;
   }
 }

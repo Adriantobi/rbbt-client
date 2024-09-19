@@ -111,7 +111,7 @@ export class RBBTClient {
     }
   }
 
-  exchange(name?: string, options = {} as RBBTExchangeParams) {
+  exchange(name: string = "", options = {} as RBBTExchangeParams) {
     if (this.closed) {
       new RBBTError("Client is closed", this);
     }
@@ -121,8 +121,6 @@ export class RBBTClient {
       if (exchange) return exchange;
     }
 
-    if (!name)
-      name = this.exchanges.findIndex((ex) => ex === undefined).toString();
     if (this.exchanges.length + 1 > this.channelMax && this.channelMax > 0)
       new RBBTError("Max number of channels reached", this);
 
