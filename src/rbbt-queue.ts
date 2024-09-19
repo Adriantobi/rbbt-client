@@ -74,6 +74,10 @@ export class RBBTQueue {
             "x-queue-name": `${this.name}`,
             exchange: this.exchange.name,
             routing_key: routingKey,
+            passive: this.passive as any,
+            durable: this.durable as any,
+            "auto-delete": this.autoDelete as any,
+            exclusive: this.exclusive as any,
           })
           .subscribe((msg) => {
             const message = new RBBTMessage(this.exchange);

@@ -111,12 +111,12 @@ export class RBBTExchange {
   }
 
   queue(
-    name = "",
+    queueName = "",
     {
       passive = false,
-      durable = name !== "",
-      autoDelete = name === "",
-      exclusive = name === "",
+      durable = queueName !== "",
+      autoDelete = queueName === "",
+      exclusive = queueName === "",
     } = {} as RBBTQueueParams,
   ) {
     if (this.connection.closed) {
@@ -127,15 +127,15 @@ export class RBBTExchange {
       new RBBTError("Exchange is closed", this.connection);
     }
 
-    if (name) {
-      const queue = this.queues.find((q) => q.name === name);
+    if (queueName) {
+      const queue = this.queues.find((q) => q.name === queueName);
       if (queue) return queue;
     }
 
-    if (!name)
-      name = this.queues.findIndex((ex) => ex === undefined).toString();
+    if (!queueName)
+      queueName = this.queues.findIndex((ex) => ex === undefined).toString();
 
-    const queue = new RBBTQueue(this, name, {
+    const queue = new RBBTQueue(this, queueName, {
       passive,
       durable,
       autoDelete,
