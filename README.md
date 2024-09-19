@@ -1,6 +1,6 @@
 # RBBTClient
 
-`RBBTClient` is a JavaScript library designed for seamless interaction with RabbitMQ over WebSockets. It offers a simple and intuitive API for connecting to RabbitMQ brokers, managing exchanges, and subscribing to queues.
+`RBBTClient` is a JavaScript library designed for seamless interaction with RabbitMQ over WebSockets. It offers a simple and intuitive API for connecting to RabbitMQ brokers, managing exchanges and subscribing to queues.
 
 ## Installation
 
@@ -16,8 +16,9 @@ Here's a basic example of how to use `RBBTClient`:
 
 ```javascript
 import { RBBTClient } from "rbbt-client";
-// Initialize the RBBTClient
+// Initialize the RBBTClient: Stomp URL, vhost, username, password
 const rbbt = new RBBTClient("ws://localhost:15674/ws", "/", "guest", "guest");
+// The default stomp port is 15674, please don't make the same mistakes I made that lead to this package
 // Connect to the RabbitMQ broker
 const conn = rbbt.connect();
 // Create a new channel
