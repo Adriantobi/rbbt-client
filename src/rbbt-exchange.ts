@@ -132,9 +132,6 @@ export class RBBTExchange {
       if (queue) return queue;
     }
 
-    if (!queueName)
-      queueName = this.queues.findIndex((ex) => ex === undefined).toString();
-
     const queue = new RBBTQueue(this, queueName, {
       passive,
       durable,
