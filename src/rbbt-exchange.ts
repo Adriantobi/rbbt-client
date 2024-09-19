@@ -101,7 +101,7 @@ export class RBBTExchange {
             message.properties.headers = msg.headers;
             callback(message);
             if (!noAck) msg.ack();
-            else msg.nack();
+            // else msg.nack();
           });
       }
     } else new RBBTError("Client not connected", this.connection);
