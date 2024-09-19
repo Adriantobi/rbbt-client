@@ -92,13 +92,13 @@ export class RBBTExchange {
             passive: this.options.passive as any,
             durable: this.options.durable as any,
             "auto-delete": this.options.autoDelete as any,
-            ack: noAck ? "client" : "client-individual",
+            ack: "client-individual",
           })
           .subscribe((msg) => {
             const message = new RBBTMessage(this);
             if (msg.binaryBody) message.body = msg.binaryBody;
             else message.body = msg.body;
-            message.properties = msg.headers;
+            message.properties.headers = msg.headers;
             callback(message);
             if (!noAck) msg.ack();
             else msg.nack();

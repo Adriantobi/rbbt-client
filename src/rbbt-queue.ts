@@ -151,13 +151,13 @@ export class RBBTQueue {
               durable: this.durable as any,
               "auto-delete": this.autoDelete as any,
               exclusive: this.exclusive as any,
-              ack: noAck ? "client" : "client-individual",
+              ack: "client-individual",
             })
             .subscribe((msg) => {
               const message = new RBBTMessage(this.exchange);
               if (msg.binaryBody) message.body = msg.binaryBody;
               else message.body = msg.body;
-              message.properties = msg.headers;
+              message.properties.headers = msg.headers;
               callback(message);
               if (!noAck) msg.ack();
               else msg.nack();
@@ -169,13 +169,13 @@ export class RBBTQueue {
               passive: this.passive as any,
               durable: this.durable as any,
               "auto-delete": this.autoDelete as any,
-              ack: noAck ? "client" : "client-individual",
+              ack: "client-individual",
             })
             .subscribe((msg) => {
               const message = new RBBTMessage(this.exchange);
               if (msg.binaryBody) message.body = msg.binaryBody;
               else message.body = msg.body;
-              message.properties = msg.headers;
+              message.properties.headers = msg.headers;
               callback(message);
               if (!noAck) msg.ack();
               else msg.nack();
