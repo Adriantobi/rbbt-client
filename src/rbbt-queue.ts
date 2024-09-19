@@ -151,7 +151,7 @@ export class RBBTQueue {
               durable: this.durable as any,
               "auto-delete": this.autoDelete as any,
               exclusive: this.exclusive as any,
-              ack: "client-individual",
+              ack: noAck ? "client" : "client-individual",
             })
             .subscribe((msg) => {
               const message = new RBBTMessage(this.exchange);
@@ -169,7 +169,7 @@ export class RBBTQueue {
               passive: this.passive as any,
               durable: this.durable as any,
               "auto-delete": this.autoDelete as any,
-              ack: "client-individual",
+              ack: noAck ? "client" : "client-individual",
             })
             .subscribe((msg) => {
               const message = new RBBTMessage(this.exchange);

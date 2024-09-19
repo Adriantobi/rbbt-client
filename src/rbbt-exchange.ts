@@ -92,7 +92,7 @@ export class RBBTExchange {
             passive: this.options.passive as any,
             durable: this.options.durable as any,
             "auto-delete": this.options.autoDelete as any,
-            ack: "client-individual",
+            ack: noAck ? "client" : "client-individual",
           })
           .subscribe((msg) => {
             const message = new RBBTMessage(this);
