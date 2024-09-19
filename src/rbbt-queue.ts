@@ -160,7 +160,7 @@ export class RBBTQueue {
               message.properties.headers = msg.headers;
               callback(message);
               if (!noAck) msg.ack();
-              else msg.nack();
+              // else msg.nack();
             });
         } else {
           this.watch = this.exchange.connection.client
@@ -178,7 +178,7 @@ export class RBBTQueue {
               message.properties.headers = msg.headers;
               callback(message);
               if (!noAck) msg.ack();
-              else msg.nack();
+              // else msg.nack();
             });
         }
       }
