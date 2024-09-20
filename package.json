@@ -1,6 +1,6 @@
 {
   "name": "rbbt-client",
-  "version": "0.4.1",
+  "version": "0.4.4",
   "main": "./dist/index.ts",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -17,9 +17,9 @@
     "rxjs",
     "broker"
   ],
-  "author": "",
+  "author": "Adrian Tobi",
   "license": "ISC",
-  "description": "",
+  "description": "RabbitMQ Broker Client",
   "devDependencies": {
     "tsup": "^8.3.0",
     "typescript": "^5.6.2"

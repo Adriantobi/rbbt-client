@@ -1,3 +1,4 @@
+import { IMessage } from "@stomp/rx-stomp";
 import { RBBTError } from "./rbbt-error";
 import { RBBTExchange } from "./rbbt-exchange";
 import { RBBTMessage } from "./rbbt-message";
@@ -154,10 +155,7 @@ export class RBBTQueue {
               ack: noAck ? "client" : "client-individual",
             })
             .subscribe((msg) => {
-              const message = new RBBTMessage(this.exchange);
-              if (msg.binaryBody) message.body = msg.binaryBody;
-              else message.body = msg.body;
-              message.properties.headers = msg.headers;
+              const message = this.createMessage(msg);
               callback(message);
               if (!noAck) msg.ack();
               // else msg.nack();
@@ -172,10 +170,7 @@ export class RBBTQueue {
               ack: noAck ? "client" : "client-individual",
             })
             .subscribe((msg) => {
-              const message = new RBBTMessage(this.exchange);
-              if (msg.binaryBody) message.body = msg.binaryBody;
-              else message.body = msg.body;
-              message.properties.headers = msg.headers;
+              const message = this.createMessage(msg);
               callback(message);
               if (!noAck) msg.ack();
               // else msg.nack();
@@ -219,5 +214,25 @@ export class RBBTQueue {
       uniqueId += chars[Math.floor(Math.random() * chars.length)];
     }
     return `rbbt.gen-${uniqueId}`;
+  }
+
+  private createMessage(msg: IMessage) {
+    const message = new RBBTMessage(this.exchange);
+    if (msg.binaryBody) message.body = msg.binaryBody;
+    else message.body = msg.body;
+    message.properties.messageId = msg.headers["message-id"];
+    message.redelivered = msg.headers.redelivered === "true" ? true : false;
+    message.bodySize = Number(msg.headers["content-length"]);
+    if (msg.headers.destination.split("/").length > 2) {
+      message.routingKey = msg.headers.destination.split("/")[2];
+    }
+
+    // Remove the headers that have been assigned to other properties
+    delete msg.headers["message-id"];
+    delete msg.headers.redelivered;
+    delete msg.headers["content-length"];
+    message.properties.headers = { ...msg.headers };
+
+    return message;
   }
 }

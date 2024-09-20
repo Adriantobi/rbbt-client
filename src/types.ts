@@ -13,20 +13,8 @@ export type RBBTConsumeParams = {
 };
 
 export type RBBTProperties = {
-  contentType?: string;
-  contentEncoding?: string;
   headers?: Record<string, any>;
-  deliveryMode?: number;
-  priority?: number;
-  correlationId?: string;
-  replyTo?: string;
-  expiration?: string;
   messageId?: string;
-  timestamp?: number;
-  type?: string;
-  userId?: string;
-  appId?: string;
-  clusterId?: string;
 };
 
 export type RBBTExchangeParams = {
