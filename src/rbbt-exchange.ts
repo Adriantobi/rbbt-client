@@ -158,8 +158,8 @@ export class RBBTExchange {
     message.properties.messageId = msg.headers["message-id"];
     message.redelivered = msg.headers.redelivered === "true" ? true : false;
     message.bodySize = Number(msg.headers["content-length"]);
-    if (msg.headers.destination.split("/").length > 2) {
-      message.routingKey = msg.headers.destination.split("/")[2];
+    if (msg.headers.destination.split("/").length > 3) {
+      message.routingKey = msg.headers.destination.split("/")[3];
     }
 
     // Remove the headers that have been assigned to other properties
