@@ -104,31 +104,87 @@ try {
 
 ### `RBBTExchange`
 
-#### Constructor: `new RBBTExchange(connection, name, options)`
+#### Constructor: `new RBBTExchange(connection, name, options?)`
 
-- **`connection`**: The `RBBTClient` instance associated with the exchange.
+- **`connection`**: The `RBBTClient` instance used for the connection.
+- **`name`**: The name of the exchange. If not provided, a unique name will be generated (default: `""`).
+- **`options?`**: Optional parameters to configure the exchange:
+  - **`passive`**: Whether the exchange is passive (default: `false`).
+  - **`durable`**: Whether the exchange is durable (default: `false`).
+  - **`autoDelete`**: Whether the exchange should auto-delete (default: `false`).
+  - **`internal`**: Whether the exchange is internal (default: `false`).
+
+#### Properties
+
+- **`connection`**: The associated `RBBTClient` instance.
 - **`name`**: The name of the exchange.
-- **`options?`**: Optional parameters to configure the exchange (default: `{}`).
+- **`watch`**: The watch subscription for the exchange.
+- **`helper`**: An instance of `RBBTHelpers`.
+- **`queues`**: The list of queues associated with the exchange.
+- **`closed`**: A boolean indicating whether the exchange is closed (default: `false`).
+- **`options`**: The options used to configure the exchange.
 
 #### Methods
 
-- **`queue(name, options)`**
+- **`open()`**
 
-  - Declares a queue in the current exchange.
-  - **Parameters**:
-    - `name`: The name of the queue (default: `""`).
-    - `options`: Queue options (`durable`, `exclusive`, etc.).
-  - **Returns**: An `RBBTQueue` object.
+  - Opens the exchange by subscribing to it and watching for messages.
+  - Throws an error if the client is not connected.
   - Example:
     ```javascript
-    const q = ex.queue("", { exclusive: true });
+    const exchange = new RBBTExchange(connection, "myExchange");
     ```
 
 - **`close()`**
-  - Closes the exchange and unsubscribes from all queues.
+
+  - Closes the exchange by unsubscribing from the watch and marking it as closed.
   - Example:
     ```javascript
-    ex.close();
+    exchange.close();
+    ```
+
+- **`send(body, routingKey, properties?)`**
+
+  - Sends a message to the exchange with the specified `body`, `routingKey`, and optional `properties`.
+  - **Parameters**:
+    - `body`: The message body (can be a `string` or `Uint8Array`).
+    - `routingKey`: The routing key for the message.
+    - `properties`: Additional message properties (default: `{}`).
+  - Example:
+    ```javascript
+    exchange.send("Hello, World!", "myRoutingKey");
+    ```
+
+- **`subscribe(callback, { noAck, exclusive })`**
+
+  - Subscribes to the exchange and receives messages, triggering the provided `callback` function.
+  - **Parameters**:
+    - `callback`: The function to handle the received messages (`message: RBBTMessage`).
+    - `noAck`: Whether to automatically acknowledge messages (default: `false`).
+    - `exclusive`: Whether the subscription is exclusive (default: `false`).
+  - Example:
+    ```javascript
+    exchange.subscribe((msg) => {
+      console.log("Received message:", msg.body);
+    });
+    ```
+
+- **`unsubscribe()`**
+
+  - Unsubscribes from the exchange and stops receiving messages.
+  - Example:
+    ```javascript
+    exchange.unsubscribe();
+    ```
+
+- **`queue(queueName, options?)`**
+  - Returns a queue associated with the exchange, creating it if necessary.
+  - **Parameters**:
+    - `queueName`: The name of the queue (default: `""`).
+    - `options`: Queue options such as `passive`, `durable`, `autoDelete`, and `exclusive`.
+  - Example:
+    ```javascript
+    const queue = exchange.queue("myQueue", { durable: true });
     ```
 
 ### `RBBTMessage`
@@ -164,54 +220,79 @@ console.log(message.body); // Output: "Hello, world!"
 
 ### `RBBTQueue`
 
-#### Constructor: `new RBBTQueue(exchange, name, options)`
+#### Constructor: `new RBBTQueue(exchange, name, options?)`
 
-- **`exchange`**: The `RBBTExchange` instance that owns the queue.
-- **`name`**: The name of the queue.
-- **`options?`**: Configuration options like `durable`, `exclusive`, etc.
+- **`exchange`**: The `RBBTExchange` instance associated with the queue.
+- **`name`**: The name of the queue. If not provided, a unique name will be generated (default: `""`).
+- **`options?`**: Optional parameters to configure the queue:
+  - **`passive`**: Whether the queue should be passive (default: `false`).
+  - **`durable`**: Whether the queue should be durable (default: `true` for non-empty names, `false` for empty names).
+  - **`autoDelete`**: Whether the queue should auto-delete when no consumers are connected (default: `true` for empty names, `false` for non-empty names).
+  - **`exclusive`**: Whether the queue should be exclusive (default: `true` for empty names, `false` for non-empty names).
 
-The `RBBTQueue` class represents a queue in RabbitMQ where messages are stored.
+#### Methods
 
-#### Methods:
+- **`create()`**
 
-- **`bind(routingKey)`**
-
-  - Binds the queue to the exchange with a specific routing key.
-  - **Parameters**:
-    - `routingKey`: The routing key to bind (default: `""`).
+  - Creates the queue if the connection client is active and the exchange is not closed.
   - Example:
     ```javascript
-    queue.bind("my.routing.key");
+    const q = new RBBTQueue(ex, "myQueue");
     ```
 
-- **`unbind(routingKey)`**
+- **`bind(routingKey?)`**
 
-  - Unbinds the queue from the exchange with the given routing key.
+  - Binds the queue to an exchange with the given `routingKey`. If the queue is already bound, the binding is updated.
   - **Parameters**:
-    - `routingKey`: The routing key to unbind (default: `""`).
+    - `routingKey`: The routing key for binding (default: `""`).
   - Example:
     ```javascript
-    queue.unbind("my.routing.key");
+    q.bind("routing.key");
+    ```
+
+- **`unbind(routingKey?)`**
+
+  - Unbinds the queue from an exchange with the given `routingKey`.
+  - **Parameters**:
+    - `routingKey`: The routing key for unbinding (default: `""`).
+  - Example:
+    ```javascript
+    q.unbind("routing.key");
     ```
 
 - **`subscribe(options, callback)`**
 
-  - Subscribes to the queue, receiving messages.
+  - Subscribes to the queue for receiving messages. A callback is triggered on each new message.
   - **Parameters**:
-    - `options`: Subscription options like `noAck`, `exclusive`, etc.
-    - `callback`: A function to handle incoming messages.
+    - `options`: Subscription options:
+      - `noAck`: Whether to acknowledge messages automatically (default: `true`).
+      - `exclusive`: Whether the subscription is exclusive (default: `false`).
+      - `tag`: A custom tag for the subscription (default: `""`).
+      - `args`: Additional arguments for the subscription (default: `{}`).
+    - `callback`: The function to handle the received messages (`msg: RBBTMessage`).
   - Example:
     ```javascript
-    queue.subscribe({}, (msg) => {
+    q.subscribe({ noAck: false }, (msg) => {
       console.log(msg.body);
     });
     ```
 
 - **`unsubscribe()`**
-  - Unsubscribes from the queue.
+
+  - Unsubscribes from the queue and stops receiving messages.
   - Example:
     ```javascript
-    queue.unsubscribe();
+    q.unsubscribe();
+    ```
+
+- **`send(body, properties?)`**
+  - Sends a message to the queue with the specified `body` and `properties`.
+  - **Parameters**:
+    - `body`: The message body (can be a `string` or `Uint8Array`).
+    - `properties`: Additional message properties (default: `{}`).
+  - Example:
+    ```javascript
+    q.send("Hello, World!", { priority: 1 });
     ```
 
 ### Types

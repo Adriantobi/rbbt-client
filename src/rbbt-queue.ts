@@ -1,4 +1,3 @@
-import { IMessage } from "@stomp/rx-stomp";
 import { RBBTError } from "./rbbt-error";
 import { RBBTExchange } from "./rbbt-exchange";
 import { RBBTMessage } from "./rbbt-message";
