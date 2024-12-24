@@ -202,13 +202,7 @@ The `RBBTMessage` class represents a message sent or received from an exchange o
 - **`properties`**: A collection of message properties (headers, delivery mode, etc.).
 - **`bodySize`**: The size of the message body (default: `0`).
 - **`body`**: The message content, which can be a `Uint8Array`, `string`, or `null`.
-- **`bodyPos`**: The position in the message body (default: `0`).
-- **`deliveryTag`**: The tag associated with the message delivery.
-- **`consumerTag`**: The tag for the consumer receiving the message.
 - **`redelivered`**: A flag indicating if the message was redelivered (default: `false`).
-- **`messageCount?`**: The count of messages (optional).
-- **`replyCode?`**: The reply code (optional).
-- **`replyText?`**: The reply text (optional).
 
 #### Example:
 
