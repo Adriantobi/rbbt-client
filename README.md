@@ -256,37 +256,13 @@ export type RBBTConsumeParams = {
 
 Defines the message properties that can be set on a published message.
 
-- **`contentType`**: (optional) The MIME type of the message content.
-- **`contentEncoding`**: (optional) The encoding used for the message.
 - **`headers`**: (optional) Custom headers for the message, as key-value pairs.
-- **`deliveryMode`**: (optional) Message delivery mode (persistent or transient).
-- **`priority`**: (optional) Message priority.
-- **`correlationId`**: (optional) Correlation ID used for RPC communication.
-- **`replyTo`**: (optional) The name of the queue to which the recipient should reply.
-- **`expiration`**: (optional) The expiration time for the message.
-- **`messageId`**: (optional) The message identifier.
-- **`timestamp`**: (optional) Timestamp when the message was created.
-- **`type`**: (optional) The message type.
-- **`userId`**: (optional) The user ID that published the message.
-- **`appId`**: (optional) The application ID that published the message.
-- **`clusterId`**: (optional) Cluster identifier for the message.
+- **`messageId`**: (optional) A unique identifier for the message.
 
 ```typescript
 export type RBBTProperties = {
-  contentType?: string;
-  contentEncoding?: string;
   headers?: Record<string, any>;
-  deliveryMode?: number;
-  priority?: number;
-  correlationId?: string;
-  replyTo?: string;
-  expiration?: string;
   messageId?: string;
-  timestamp?: number;
-  type?: string;
-  userId?: string;
-  appId?: string;
-  clusterId?: string;
 };
 ```
 

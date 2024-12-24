@@ -3,6 +3,7 @@ import { RBBTError } from "./rbbt-error";
 import { RBBTExchange } from "./rbbt-exchange";
 import { RBBTMessage } from "./rbbt-message";
 import { RBBTConsumeParams, RBBTProperties, RBBTQueueParams } from "./types";
+import { RBBTHelpers } from "./rbbt-helpers";
 
 export class RBBTQueue {
   readonly exchange: RBBTExchange;
@@ -14,6 +15,7 @@ export class RBBTQueue {
   private watch: any;
   private isBound: boolean = false;
   private routingKey: string = "";
+  private helper: RBBTHelpers;
 
   constructor(
     exchange: RBBTExchange,
@@ -26,7 +28,8 @@ export class RBBTQueue {
     } = {} as RBBTQueueParams,
   ) {
     this.exchange = exchange;
-    this.name = name === "" ? this.generateQueueName() : name;
+    this.helper = new RBBTHelpers();
+    this.name = name === "" ? this.helper.generateName("Queue") : name;
     this.passive = passive;
     this.durable = durable;
     this.autoDelete = autoDelete;
@@ -155,7 +158,7 @@ export class RBBTQueue {
               ack: noAck ? "client" : "client-individual",
             })
             .subscribe((msg) => {
-              const message = this.createMessage(msg);
+              const message = this.helper.createMessage(this.exchange, msg);
               callback(message);
               if (!noAck) msg.ack();
               // else msg.nack();
@@ -170,7 +173,7 @@ export class RBBTQueue {
               ack: noAck ? "client" : "client-individual",
             })
             .subscribe((msg) => {
-              const message = this.createMessage(msg);
+              const message = this.helper.createMessage(this.exchange, msg);
               callback(message);
               if (!noAck) msg.ack();
               // else msg.nack();
@@ -204,35 +207,5 @@ export class RBBTQueue {
         this.exchange.connection.client.publish(message);
       }
     } else new RBBTError("Client not connected", this.exchange.connection);
-  }
-
-  private generateQueueName() {
-    const chars =
-      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()_+1234567890";
-    let uniqueId = "";
-    for (let i = 0; i < 22; i++) {
-      uniqueId += chars[Math.floor(Math.random() * chars.length)];
-    }
-    return `rbbt.gen-${uniqueId}`;
-  }
-
-  private createMessage(msg: IMessage) {
-    const message = new RBBTMessage(this.exchange);
-    if (msg.binaryBody) message.body = msg.binaryBody;
-    else message.body = msg.body;
-    message.properties.messageId = msg.headers["message-id"];
-    message.redelivered = msg.headers.redelivered === "true" ? true : false;
-    message.bodySize = Number(msg.headers["content-length"]);
-    if (msg.headers.destination.split("/").length > 3) {
-      message.routingKey = msg.headers.destination.split("/")[3];
-    }
-
-    // Remove the headers that have been assigned to other properties
-    delete msg.headers["message-id"];
-    delete msg.headers.redelivered;
-    delete msg.headers["content-length"];
-    message.properties.headers = { ...msg.headers };
-
-    return message;
   }
 }

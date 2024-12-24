@@ -3,12 +3,13 @@ import { RBBTClient } from "./rbbt-client";
 import { RBBTQueue } from "./rbbt-queue";
 import { RBBTExchangeParams, RBBTProperties, RBBTQueueParams } from "./types";
 import { RBBTMessage } from "./rbbt-message";
-import { IMessage } from "@stomp/rx-stomp";
+import { RBBTHelpers } from "./rbbt-helpers";
 
 export class RBBTExchange {
   readonly connection: RBBTClient;
   readonly name: string;
   private watch: any;
+  private helper: RBBTHelpers;
   queues: RBBTQueue[];
   closed = false;
   options: RBBTExchangeParams;
@@ -19,7 +20,8 @@ export class RBBTExchange {
     options = {} as RBBTExchangeParams,
   ) {
     this.connection = connection;
-    this.name = name === "" ? this.generateExchangeName() : name;
+    this.helper = new RBBTHelpers();
+    this.name = name === "" ? this.helper.generateName("Exchange") : name;
     this.options = options;
     this.queues = [];
     this.open();
@@ -30,10 +32,10 @@ export class RBBTExchange {
       try {
         this.watch = this.connection.client
           ?.watch(`/exchange/${this.name}`, {
-            passive: this.options.passive as any,
-            durable: this.options.durable as any,
-            "auto-delete": this.options.autoDelete as any,
-            internal: this.options.internal as any,
+            passive: (this.options.passive as any) || false,
+            durable: (this.options.durable as any) || false,
+            "auto-delete": (this.options.autoDelete as any) || false,
+            internal: (this.options.internal as any) || false,
           })
           .subscribe((msg) => {
             const message = new RBBTMessage(this);
@@ -96,7 +98,7 @@ export class RBBTExchange {
             ack: noAck ? "client" : "client-individual",
           })
           .subscribe((msg) => {
-            const message = this.createMessage(msg);
+            const message = this.helper.createMessage(this, msg);
             callback(message);
             if (!noAck) msg.ack();
             // else msg.nack();
@@ -139,35 +141,5 @@ export class RBBTExchange {
     });
     this.queues.push(queue);
     return queue;
-  }
-
-  private generateExchangeName() {
-    const chars =
-      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()_+1234567890";
-    let uniqueId = "";
-    for (let i = 0; i < 10; i++) {
-      uniqueId += chars[Math.floor(Math.random() * chars.length)];
-    }
-    return `rbbt.${uniqueId}`;
-  }
-
-  private createMessage(msg: IMessage) {
-    const message = new RBBTMessage(this);
-    if (msg.binaryBody) message.body = msg.binaryBody;
-    else message.body = msg.body;
-    message.properties.messageId = msg.headers["message-id"];
-    message.redelivered = msg.headers.redelivered === "true" ? true : false;
-    message.bodySize = Number(msg.headers["content-length"]);
-    if (msg.headers.destination.split("/").length > 3) {
-      message.routingKey = msg.headers.destination.split("/")[3];
-    }
-
-    // Remove the headers that have been assigned to other properties
-    delete msg.headers["message-id"];
-    delete msg.headers.redelivered;
-    delete msg.headers["content-length"];
-    message.properties.headers = { ...msg.headers };
-
-    return message;
   }
 }
