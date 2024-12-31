@@ -155,6 +155,8 @@ export class RBBTQueue {
               "auto-delete": this.autoDelete as any,
               exclusive: this.exclusive as any,
               ack: noAck ? "client" : "client-individual",
+              tag,
+              ...args,
             })
             .subscribe((msg) => {
               const message = this.helper.createMessage(this.exchange, msg);
@@ -199,11 +201,21 @@ export class RBBTQueue {
           ...properties,
         };
         if (typeof body === "string") {
-          message.body = body;
+          message.body = body.replace(/\r/g, "");
         } else if (body instanceof Uint8Array) {
           message.binaryBody = body;
+        } else {
+          throw new RBBTError("Invalid message body", this.exchange.connection);
         }
-        this.exchange.connection.client.publish(message);
+
+        try {
+          this.exchange.connection.client.publish(message);
+        } catch {
+          throw new RBBTError(
+            "Failed to send message",
+            this.exchange.connection,
+          );
+        }
       }
     } else new RBBTError("Client not connected", this.exchange.connection);
   }
