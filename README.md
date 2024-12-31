@@ -387,10 +387,15 @@ const queue = exchange.queue("my.queue", {
 queue.bind("my.routing.key");
 
 // Step 6: Publish a message to the exchange
-exchange.publish("my.routing.key", "Hello RabbitMQ!");
+exchange.send("Hello RabbitMQ!", "my.routing.key");
 
 // Step 7: Subscribe to the queue to receive messages
-queue.subscribe({}, (message) => {
-  console.log("Received message:", message.body); // Display the message body in the console
-});
+queue.subscribe(
+  {
+    noAck: false,
+  },
+  (message) => {
+    console.log("Received message:", message.body); // Display the message body in the console
+  },
+);
 ```

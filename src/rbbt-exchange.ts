@@ -69,11 +69,17 @@ export class RBBTExchange {
         ...properties,
       };
       if (typeof body === "string") {
-        message.body = body;
+        message.body = body.replace(/\r/g, "");
       } else if (body instanceof Uint8Array) {
         message.binaryBody = body;
+      } else {
+        throw new RBBTError("Invalid message body", this.connection);
       }
-      this.connection.client.publish(message);
+      try {
+        this.connection.client.publish(message);
+      } catch {
+        throw new RBBTError("Failed to send message", this.connection);
+      }
     } else new RBBTError("Client not connected", this.connection);
   }
 
