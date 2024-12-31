@@ -1,6 +1,5 @@
 import { RBBTExchange } from "./rbbt-exchange";
 import { RBBTError } from "./rbbt-error";
-import { Client } from "@stomp/stompjs";
 import { RBBTExchangeParams } from "./types";
 import { RxStomp } from "@stomp/rx-stomp";
 
@@ -85,20 +84,19 @@ export class RBBTClient {
     heartbeatOutgoing: number,
     reconnectDelay: number,
   ) {
-    this.client = new RxStomp(
-      new Client({
-        brokerURL: url,
-        connectHeaders: {
-          host: vhost,
-          login: username,
-          passcode: password,
-        },
-        heartbeatIncoming: heartbeatIncoming,
-        heartbeatOutgoing: heartbeatOutgoing,
-        reconnectDelay: reconnectDelay,
-        debug: this.debug,
-      }),
-    );
+    this.client = new RxStomp();
+    this.client.configure({
+      brokerURL: url,
+      connectHeaders: {
+        host: vhost,
+        login: username,
+        passcode: password,
+      },
+      heartbeatIncoming: heartbeatIncoming,
+      heartbeatOutgoing: heartbeatOutgoing,
+      reconnectDelay: reconnectDelay,
+      debug: this.debug,
+    });
 
     this.client.activate();
     this.closed = false;
