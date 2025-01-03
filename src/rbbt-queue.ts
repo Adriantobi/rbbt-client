@@ -46,10 +46,10 @@ export class RBBTQueue {
       else {
         this.watch = this.exchange.connection.client
           .watch(`/queue/${this.name}`, {
-            passive: this.passive as any,
-            durable: this.durable as any,
-            "auto-delete": this.autoDelete as any,
-            exclusive: this.exclusive as any,
+            ...(this.passive && { passive: this.passive as any }),
+            ...(this.durable && { durable: this.durable as any }),
+            ...(this.autoDelete && { "auto-delete": this.autoDelete as any }),
+            ...(this.exclusive && { exclusive: this.exclusive as any }),
           })
           .subscribe((msg) => {
             const message = new RBBTMessage(this.exchange);
@@ -77,10 +77,10 @@ export class RBBTQueue {
             "x-queue-name": `${this.name}`,
             exchange: this.exchange.name,
             routing_key: routingKey,
-            passive: this.passive as any,
-            durable: this.durable as any,
-            "auto-delete": this.autoDelete as any,
-            exclusive: this.exclusive as any,
+            ...(this.passive && { passive: this.passive as any }),
+            ...(this.durable && { durable: this.durable as any }),
+            ...(this.autoDelete && { "auto-delete": this.autoDelete as any }),
+            ...(this.exclusive && { exclusive: this.exclusive as any }),
           })
           .subscribe((msg) => {
             const message = new RBBTMessage(this.exchange);
@@ -110,10 +110,10 @@ export class RBBTQueue {
               exchange: this.exchange.name,
               routing_key: routingKey,
             }),
-            durable: this.durable as any,
-            "auto-delete": this.autoDelete as any,
-            exclusive: this.exclusive as any,
-            passive: this.passive as any,
+            ...(this.passive && { passive: this.passive as any }),
+            ...(this.durable && { durable: this.durable as any }),
+            ...(this.autoDelete && { "auto-delete": this.autoDelete as any }),
+            ...(this.exclusive && { exclusive: this.exclusive as any }),
           })
           .subscribe((msg) => {
             const message = new RBBTMessage(this.exchange);
@@ -150,12 +150,11 @@ export class RBBTQueue {
               "x-queue-name": `${this.name}`,
               exchange: this.exchange.name,
               routing_key: this.routingKey,
-              passive: this.passive as any,
-              durable: this.durable as any,
-              "auto-delete": this.autoDelete as any,
-              exclusive: this.exclusive as any,
+              ...(this.passive && { passive: this.passive as any }),
+              ...(this.durable && { durable: this.durable as any }),
+              ...(this.autoDelete && { "auto-delete": this.autoDelete as any }),
               ack: noAck ? "client" : "client-individual",
-              tag,
+              ...(tag && { tag: tag }),
               ...args,
             })
             .subscribe((msg) => {
@@ -167,11 +166,12 @@ export class RBBTQueue {
         } else {
           this.watch = this.exchange.connection.client
             .watch(`/queue/${this.name}`, {
-              exclusive: exclusive as any,
-              passive: this.passive as any,
-              durable: this.durable as any,
-              "auto-delete": this.autoDelete as any,
+              ...(this.passive && { passive: this.passive as any }),
+              ...(this.durable && { durable: this.durable as any }),
+              ...(this.autoDelete && { "auto-delete": this.autoDelete as any }),
+              ...(exclusive && { exclusive: exclusive as any }),
               ack: noAck ? "client" : "client-individual",
+              ...(tag && { tag: tag }),
             })
             .subscribe((msg) => {
               const message = this.helper.createMessage(this.exchange, msg);

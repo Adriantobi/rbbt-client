@@ -1,7 +1,12 @@
 import { RBBTError } from "./rbbt-error";
 import { RBBTClient } from "./rbbt-client";
 import { RBBTQueue } from "./rbbt-queue";
-import { RBBTExchangeParams, RBBTProperties, RBBTQueueParams } from "./types";
+import {
+  RBBTConsumeParams,
+  RBBTExchangeParams,
+  RBBTProperties,
+  RBBTQueueParams,
+} from "./types";
 import { RBBTMessage } from "./rbbt-message";
 import { RBBTHelpers } from "./rbbt-helpers";
 
@@ -32,10 +37,18 @@ export class RBBTExchange {
       try {
         this.watch = this.connection.client
           ?.watch(`/exchange/${this.name}`, {
-            passive: (this.options.passive as any) || false,
-            durable: (this.options.durable as any) || false,
-            "auto-delete": (this.options.autoDelete as any) || false,
-            internal: (this.options.internal as any) || false,
+            ...(this.options.passive && {
+              passive: this.options.passive as any,
+            }),
+            ...(this.options.durable && {
+              durable: this.options.durable as any,
+            }),
+            ...(this.options.autoDelete && {
+              "auto-delete": this.options.autoDelete as any,
+            }),
+            ...(this.options.internal && {
+              internal: this.options.internal as any,
+            }),
           })
           .subscribe((msg) => {
             const message = new RBBTMessage(this);
@@ -85,10 +98,12 @@ export class RBBTExchange {
 
   subscribe(
     callback: (message: RBBTMessage) => void,
-    { noAck = false, exclusive = false } = {} as {
-      noAck?: boolean;
-      exclusive?: boolean;
-    },
+    {
+      noAck = false,
+      exclusive = false,
+      tag = "",
+      args = {},
+    } = {} as RBBTConsumeParams,
   ) {
     if (this.connection.client && this.connection.client?.active) {
       if (this.closed === true)
@@ -96,12 +111,22 @@ export class RBBTExchange {
       else {
         this.watch = this.connection.client
           .watch(`/exchange/${this.name}`, {
-            exclusive: exclusive as any,
-            passive: this.options.passive as any,
-            durable: this.options.durable as any,
-            internal: this.options.internal as any,
-            "auto-delete": this.options.autoDelete as any,
+            ...(exclusive && { exclusive: exclusive as any }),
+            ...(this.options.passive && {
+              passive: this.options.passive as any,
+            }),
+            ...(this.options.durable && {
+              durable: this.options.durable as any,
+            }),
+            ...(this.options.autoDelete && {
+              "auto-delete": this.options.autoDelete as any,
+            }),
+            ...(this.options.internal && {
+              internal: this.options.internal as any,
+            }),
             ack: noAck ? "client" : "client-individual",
+            ...(tag && { tag: tag }),
+            ...args,
           })
           .subscribe((msg) => {
             const message = this.helper.createMessage(this, msg);
