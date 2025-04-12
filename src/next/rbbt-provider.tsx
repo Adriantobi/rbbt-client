@@ -6,16 +6,16 @@ import { RBBTContext } from "./rbbt-context";
 export interface RBBTProviderProps {
   children: ReactNode;
   config: {
-    rabbitMqConnection: string;
+    url: string;
     vhost: string;
-    socket: string;
-    pswd: string;
+    username: string;
+    password: string;
   };
 }
 
 export const RBBTProvider = ({
   children,
-  config: { rabbitMqConnection, vhost, socket, pswd },
+  config: { url, vhost, username, password },
 }: RBBTProviderProps) => {
   const [client, setClient] = useState<RBBTClient>();
   const [isConnected, setIsConnected] = useState(false);
@@ -23,14 +23,14 @@ export const RBBTProvider = ({
   const connect = useCallback(() => {
     if (client) return;
 
-    const rbbt = new RBBTClient(rabbitMqConnection, vhost, socket, pswd);
+    const rbbt = new RBBTClient(url, vhost, username, password);
 
     rbbt.reconnectionDelay = 1000;
 
     rbbt.connect();
     setClient(rbbt);
     setIsConnected(true);
-  }, [rabbitMqConnection]);
+  }, [url]);
 
   const createDisposableQueue = useCallback(
     (exchange: string, routingKey: string): RBBTQueue | undefined => {
