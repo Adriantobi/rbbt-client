@@ -1,9 +1,21 @@
 {
   "name": "rbbt-client",
-  "version": "0.5.0",
+  "version": "0.5.2",
   "main": "./dist/index.ts",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./next": {
+      "types": "./dist/next/index.d.ts",
+      "import": "./dist/next/index.mjs",
+      "require": "./dist/next/index.js"
+    }
+  },
   "scripts": {
     "build": "tsup"
   },
@@ -20,7 +32,11 @@
   "author": "Adrian Tobi",
   "license": "ISC",
   "description": "RabbitMQ Broker Client",
+  "peerDependencies": {
+    "react": ">=16.8.0"
+  },
   "devDependencies": {
+    "@types/react": "^19.1.1",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2"
   },
