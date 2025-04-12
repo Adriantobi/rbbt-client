@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext } from "react";
+import * as React from "react";
 import { RBBTClient } from "../rbbt-client";
 import { RBBTQueue } from "../rbbt-queue";
 
@@ -21,7 +21,7 @@ export interface RBBTContextType {
   convertByteArrayToString: (byteArray: Uint8Array) => string | null;
 }
 
-export const RBBTContext = createContext<RBBTContextType>({
+export const RBBTContext = React.createContext<RBBTContextType>({
   client: undefined,
   connect: undefined,
   isConnected: false,

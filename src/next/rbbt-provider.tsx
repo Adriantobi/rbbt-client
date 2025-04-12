@@ -1,12 +1,11 @@
 "use client";
 
-import { ReactNode, useState, useCallback, useEffect } from "react";
+import * as React from "react";
 import { RBBTClient } from "../rbbt-client";
-import { RBBTQueue } from "../rbbt-queue";
 import { RBBTContext } from "./rbbt-context";
 
 export interface RBBTProviderProps {
-  children: ReactNode;
+  children: React.ReactNode;
   config: {
     url: string;
     vhost: string;
@@ -19,23 +18,22 @@ export const RBBTProvider = ({
   children,
   config: { url, vhost, username, password },
 }: RBBTProviderProps) => {
-  const [client, setClient] = useState<RBBTClient>();
-  const [isConnected, setIsConnected] = useState(false);
+  const [client, setClient] = React.useState<RBBTClient>();
+  const [isConnected, setIsConnected] = React.useState(false);
 
-  const connect = useCallback(() => {
+  const connect = React.useCallback(() => {
     if (client) return;
-
     const rbbt = new RBBTClient(url, vhost, username, password);
 
     rbbt.reconnectionDelay = 1000;
-
     rbbt.connect();
+
     setClient(rbbt);
     setIsConnected(true);
-  }, [url]);
+  }, [url, client]);
 
-  const createDisposableQueue = useCallback(
-    (exchange: string, routingKey: string): RBBTQueue | undefined => {
+  const createDisposableQueue = React.useCallback(
+    (exchange: string, routingKey: string) => {
       if (!client) return undefined;
       try {
         const ex = client.exchange(exchange);
@@ -50,8 +48,8 @@ export const RBBTProvider = ({
     [client],
   );
 
-  const connectToQueue = useCallback(
-    (exchange: string, queueName: string): RBBTQueue | undefined => {
+  const connectToQueue = React.useCallback(
+    (exchange: string, queueName: string) => {
       if (!client) return undefined;
       try {
         const ex = client.exchange(exchange);
@@ -65,7 +63,7 @@ export const RBBTProvider = ({
     [client],
   );
 
-  const convertByteArrayToJSON = useCallback((byteArray: Uint8Array): any => {
+  const convertByteArrayToJSON = React.useCallback((byteArray: Uint8Array) => {
     try {
       const jsonString = new TextDecoder().decode(byteArray);
       return JSON.parse(jsonString);
@@ -75,7 +73,7 @@ export const RBBTProvider = ({
     }
   }, []);
 
-  const convertJSONToByteArray = useCallback((json: any): Uint8Array | null => {
+  const convertJSONToByteArray = React.useCallback((json: any) => {
     try {
       const jsonString = JSON.stringify(json);
       return new TextEncoder().encode(jsonString);
@@ -85,8 +83,8 @@ export const RBBTProvider = ({
     }
   }, []);
 
-  const convertByteArrayToString = useCallback(
-    (byteArray: Uint8Array): string | null => {
+  const convertByteArrayToString = React.useCallback(
+    (byteArray: Uint8Array) => {
       try {
         return new TextDecoder().decode(byteArray);
       } catch (e) {
@@ -97,33 +95,27 @@ export const RBBTProvider = ({
     [],
   );
 
-  // Attempt to connect when the provider mounts
-  useEffect(() => {
+  React.useEffect(() => {
     connect();
-
     return () => {
       client?.close();
     };
-  }, []);
+  }, [connect, client]);
 
   if (!client) {
-    return null; // Or return a loading component if desired
+    return null;
   }
 
-  return (
-    <RBBTContext.Provider
-      value={{
-        client,
-        connect,
-        isConnected,
-        createDisposableQueue,
-        connectToQueue,
-        convertByteArrayToJSON,
-        convertJSONToByteArray,
-        convertByteArrayToString,
-      }}
-    >
-      {children}
-    </RBBTContext.Provider>
-  );
+  const value = {
+    client,
+    connect,
+    isConnected,
+    createDisposableQueue,
+    connectToQueue,
+    convertByteArrayToJSON,
+    convertJSONToByteArray,
+    convertByteArrayToString,
+  };
+
+  return React.createElement(RBBTContext.Provider, { value }, children);
 };

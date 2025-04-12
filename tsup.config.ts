@@ -7,8 +7,8 @@ export default defineConfig({
   shims: true,
   skipNodeModulesBundle: true,
   clean: true,
-  external: ["react"],
+  external: ["react", "next"],
   esbuildOptions: (options) => {
-    options.jsx = "automatic";
+    options.jsx = "preserve";
   },
 });
