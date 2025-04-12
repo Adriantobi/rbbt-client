@@ -32,7 +32,7 @@ export class RBBTQueue {
     this.passive = passive;
     this.durable = durable;
     this.autoDelete = autoDelete;
-    this.exclusive = exclusive;
+    this.exclusive = exclusive || true;
     this.create();
   }
 
@@ -129,7 +129,7 @@ export class RBBTQueue {
   subscribe(
     {
       noAck = true,
-      exclusive = false,
+      exclusive = true,
       tag = "",
       args = {},
     } = {} as RBBTConsumeParams,
@@ -153,6 +153,7 @@ export class RBBTQueue {
               ...(this.passive && { passive: this.passive as any }),
               ...(this.durable && { durable: this.durable as any }),
               ...(this.autoDelete && { "auto-delete": this.autoDelete as any }),
+              ...(this.exclusive && { exclusive: this.exclusive as any }),
               ack: noAck ? "client" : "client-individual",
               ...(tag && { tag: tag }),
               ...args,
