@@ -1,3 +1,5 @@
+"use client";
+
 import { ReactNode, useState, useCallback, useEffect } from "react";
 import { RBBTClient } from "../rbbt-client";
 import { RBBTQueue } from "../rbbt-queue";

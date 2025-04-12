@@ -1,3 +1,5 @@
+"use client";
+
 import { useContext } from "react";
 import { RBBTContext, RBBTContextType } from "./rbbt-context";
 
