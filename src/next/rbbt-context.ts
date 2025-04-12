@@ -1,3 +1,5 @@
+"use client";
+
 import { createContext } from "react";
 import { RBBTClient } from "../rbbt-client";
 import { RBBTQueue } from "../rbbt-queue";
