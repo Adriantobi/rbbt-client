@@ -34,16 +34,36 @@ export class RBBTHelpers {
     return message;
   }
 
-  private convertMsg(msg: string | Uint8Array): string | JSON {
+  private convertMsg(
+    msg: string | Uint8Array,
+  ): string | number | boolean | object | Uint8Array {
     if (msg instanceof Uint8Array) {
-      const text = new TextDecoder().decode(msg);
-
       try {
-        // First try to convert to JSON
-        return JSON.parse(text);
+        const text = new TextDecoder().decode(msg);
+
+        try {
+          return JSON.parse(text);
+        } catch {
+          // If it looks like text, return as string
+          if (text.match(/^[\x20-\x7E\t\n\r]*$/)) {
+            return text;
+          }
+        }
+
+        // If we get here, it's either binary data or non-UTF8 text
+        return msg; // Return original Uint8Array
       } catch {
-        // If JSON parsing fails, return as string
-        return text;
+        // If TextDecoder fails, it's definitely binary
+        return msg; // Return original Uint8Array
+      }
+    }
+
+    // Handle string input
+    if (typeof msg === "string") {
+      try {
+        return JSON.parse(msg);
+      } catch {
+        return msg;
       }
     }
 

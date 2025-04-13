@@ -6,7 +6,7 @@ export class RBBTMessage {
   routingKey: string = "";
   properties: RBBTProperties = {};
   bodySize = 0;
-  body: Uint8Array | string | JSON | null = null;
+  body: Uint8Array | string | number | boolean | object | null = null;
   redelivered = false;
 
   constructor(exchange: RBBTExchange) {
