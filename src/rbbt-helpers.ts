@@ -16,8 +16,8 @@ export class RBBTHelpers {
 
   public createMessage(exchange: RBBTExchange, msg: IMessage) {
     const message = new RBBTMessage(exchange);
-    if (msg.binaryBody) message.body = msg.binaryBody;
-    else message.body = msg.body;
+    if (msg.binaryBody) message.body = this.convertMsg(msg.binaryBody);
+    else message.body = this.convertMsg(msg.body);
     message.properties.messageId = msg.headers["message-id"];
     message.redelivered = msg.headers.redelivered === "true" ? true : false;
     message.bodySize = Number(msg.headers["content-length"]);
@@ -32,5 +32,21 @@ export class RBBTHelpers {
     message.properties.headers = { ...msg.headers };
 
     return message;
+  }
+
+  private convertMsg(msg: string | Uint8Array): string | JSON {
+    if (msg instanceof Uint8Array) {
+      const text = new TextDecoder().decode(msg);
+
+      try {
+        // First try to convert to JSON
+        return JSON.parse(text);
+      } catch {
+        // If JSON parsing fails, return as string
+        return text;
+      }
+    }
+
+    return msg;
   }
 }
