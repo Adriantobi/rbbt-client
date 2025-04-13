@@ -16,9 +16,6 @@ export interface RBBTContextType {
     exchange: string,
     queueName: string,
   ) => RBBTQueue | undefined;
-  convertByteArrayToJSON: (byteArray: Uint8Array) => any;
-  convertJSONToByteArray: (json: any) => Uint8Array | null;
-  convertByteArrayToString: (byteArray: Uint8Array) => string | null;
 }
 
 export const RBBTContext = React.createContext<RBBTContextType>({
@@ -27,7 +24,4 @@ export const RBBTContext = React.createContext<RBBTContextType>({
   isConnected: false,
   createDisposableQueue: () => undefined,
   connectToQueue: () => undefined,
-  convertByteArrayToJSON: () => null,
-  convertJSONToByteArray: () => null,
-  convertByteArrayToString: () => null,
 });

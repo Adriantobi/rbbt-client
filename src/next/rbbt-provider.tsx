@@ -63,38 +63,6 @@ export const RBBTProvider = ({
     [client],
   );
 
-  const convertByteArrayToJSON = React.useCallback((byteArray: Uint8Array) => {
-    try {
-      const jsonString = new TextDecoder().decode(byteArray);
-      return JSON.parse(jsonString);
-    } catch (e) {
-      console.error(e);
-      return null;
-    }
-  }, []);
-
-  const convertJSONToByteArray = React.useCallback((json: any) => {
-    try {
-      const jsonString = JSON.stringify(json);
-      return new TextEncoder().encode(jsonString);
-    } catch (e) {
-      console.error(e);
-      return null;
-    }
-  }, []);
-
-  const convertByteArrayToString = React.useCallback(
-    (byteArray: Uint8Array) => {
-      try {
-        return new TextDecoder().decode(byteArray);
-      } catch (e) {
-        console.error(e);
-        return null;
-      }
-    },
-    [],
-  );
-
   React.useEffect(() => {
     connect();
     return () => {
@@ -112,9 +80,6 @@ export const RBBTProvider = ({
     isConnected,
     createDisposableQueue,
     connectToQueue,
-    convertByteArrayToJSON,
-    convertJSONToByteArray,
-    convertByteArrayToString,
   };
 
   return React.createElement(RBBTContext.Provider, { value }, children);

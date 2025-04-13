@@ -16,8 +16,8 @@ export class RBBTHelpers {
 
   public createMessage(exchange: RBBTExchange, msg: IMessage) {
     const message = new RBBTMessage(exchange);
-    if (msg.binaryBody) message.body = msg.binaryBody;
-    else message.body = msg.body;
+    if (msg.binaryBody) message.body = this.convertMsg(msg.binaryBody);
+    else message.body = this.convertMsg(msg.body);
     message.properties.messageId = msg.headers["message-id"];
     message.redelivered = msg.headers.redelivered === "true" ? true : false;
     message.bodySize = Number(msg.headers["content-length"]);
@@ -32,5 +32,41 @@ export class RBBTHelpers {
     message.properties.headers = { ...msg.headers };
 
     return message;
+  }
+
+  private convertMsg(
+    msg: string | Uint8Array,
+  ): string | number | boolean | object | Uint8Array {
+    if (msg instanceof Uint8Array) {
+      try {
+        const text = new TextDecoder().decode(msg);
+
+        try {
+          return JSON.parse(text);
+        } catch {
+          // If it looks like text, return as string
+          if (text.match(/^[\x20-\x7E\t\n\r]*$/)) {
+            return text;
+          }
+        }
+
+        // If we get here, it's either binary data or non-UTF8 text
+        return msg; // Return original Uint8Array
+      } catch {
+        // If TextDecoder fails, it's definitely binary
+        return msg; // Return original Uint8Array
+      }
+    }
+
+    // Handle string input
+    if (typeof msg === "string") {
+      try {
+        return JSON.parse(msg);
+      } catch {
+        return msg;
+      }
+    }
+
+    return msg;
   }
 }

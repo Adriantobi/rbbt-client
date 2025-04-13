@@ -10,9 +10,6 @@ export function useRBBT(): RBBTContextType {
     isConnected,
     createDisposableQueue,
     connectToQueue,
-    convertByteArrayToJSON,
-    convertJSONToByteArray,
-    convertByteArrayToString,
   } = React.useContext(RBBTContext);
 
   if (!client) {
@@ -25,8 +22,5 @@ export function useRBBT(): RBBTContextType {
     isConnected,
     createDisposableQueue,
     connectToQueue,
-    convertByteArrayToJSON,
-    convertJSONToByteArray,
-    convertByteArrayToString,
   };
 }

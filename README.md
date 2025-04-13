@@ -1,3 +1,5 @@
+> **New:** Next.js quality of life improvements (hooks and providers) 
+
 # RBBTClient
 
 `RBBTClient` is a JavaScript library designed for seamless interaction with RabbitMQ over WebSockets. It offers a simple and intuitive API for connecting to RabbitMQ brokers, managing exchanges and subscribing to queues.
@@ -359,6 +361,107 @@ export type RBBTExchangeParams = {
   internal?: boolean;
   args?: Record<string, any>;
 };
+```
+
+## Next.js Integration
+
+`rbbt-client/next` provides React components and hooks for easy integration with Next.js applications.
+
+### RBBTProvider
+
+A React context provider that manages the RabbitMQ client connection.
+
+```typescript
+import { RBBTProvider } from "rbbt-client/next";
+
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <RBBTProvider
+      config={{
+        url: process.env.RBBT_WS_URL!,
+        vhost: process.env.RBBT_VHOST!,
+        username: process.env.RBBT_USERNAME!,
+        password: process.env.RBBT_PASSWORD!,
+      }}
+    >
+      {children}
+    </RBBTProvider>
+  );
+}
+```
+
+#### Props
+
+- **`config`**: Configuration object for RabbitMQ connection
+  - `url`: WebSocket URL for RabbitMQ
+  - `vhost`: Virtual host
+  - `username`: Authentication username
+  - `password`: Authentication password
+- **`children`**: React child components
+
+### useRBBT Hook
+
+A React hook that provides access to the RabbitMQ client and helper functions.
+
+```typescript
+import { useRBBT } from "rbbt-client/next";
+
+function MyComponent() {
+  const { 
+    client,                 // RBBTClient instance
+    connect,               // Function to manually connect
+    isConnected,          // Connection status
+    createDisposableQueue, // Create temporary queue
+    connectToQueue        // Connect to existing queue
+  } = useRBBT();
+
+  // Example: Create disposable queue and subscribe
+  useEffect(() => {
+    const queue = createDisposableQueue("my.exchange", "my.routing.key");
+    if (queue) {
+      queue.subscribe({ noAck: true }, (msg) => {
+        console.log(msg.body);
+      });
+    }
+  }, []);
+
+  return <div>Connected: {isConnected ? "Yes" : "No"}</div>;
+}
+```
+
+#### Returns
+
+- **`client`**: The RBBTClient instance
+- **`connect()`**: Function to manually initiate connection
+- **`isConnected`**: Boolean indicating connection status
+- **`createDisposableQueue(exchange: string, routingKey: string)`**: Creates a temporary queue bound to an exchange
+- **`connectToQueue(exchange: string, queueName: string)`**: Connects to an existing named queue
+
+### Example Usage
+
+```typescript
+import { useRBBT } from "rbbt-client/next";
+
+function MessageSubscriber() {
+  const { createDisposableQueue } = useRBBT();
+
+  useEffect(() => {
+    // Create temporary queue bound to exchange
+    const queue = createDisposableQueue("my.direct.exchange", "my.routing.key");
+    
+    if (queue) {
+      // Subscribe to messages
+      queue.subscribe({ noAck: true }, (msg) => {
+        console.log('Received:', msg.body);
+      });
+    }
+
+    // Clean up subscription on unmount
+    return () => queue?.unsubscribe();
+  }, []);
+
+  return <div>Listening for messages...</div>;
+}
 ```
 
 ## Example
